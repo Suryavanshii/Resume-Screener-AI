@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resume Screener AI - ATS Match & Interview Prep</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="bg-glow"></div>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="logo">
+                <i class="fa-solid fa-wand-magic-sparkles logo-icon"></i>
+                <div class="logo-text">
+                    <h1>Screener<span>.AI</span></h1>
+                    <p>Next-Gen ATS Parser & Optimizer</p>
+                </div>
+            </div>
+            
+            <div class="api-key-config">
+                <div class="api-status" id="apiStatus">
+                    <span class="status-dot green"></span>
+                    <span class="status-text">Quick Local Scan</span>
+                </div>
+                <div class="api-input-wrapper">
+                    <i class="fa-solid fa-key key-icon"></i>
+                    <input type="password" id="geminiApiKey" placeholder="Enter Gemini API Key (Optional)..." title="Optionally add key for deep AI insights">
+                    <button id="toggleKeyVis" class="key-vis-btn" type="button" title="Toggle visibility">
+                        <i class="fa-regular fa-eye"></i>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content Grid -->
+        <main class="main-grid">
+            <!-- Left Side: Inputs -->
+            <section class="panel card input-panel">
+                <div class="panel-header">
+                    <h2><i class="fa-solid fa-sliders"></i> Analysis Console</h2>
+                    <p>Provide your resume and job criteria below.</p>
+                </div>
+
+                <form id="screenerForm" class="screener-form">
+                    <!-- File Dropzone -->
+                    <div class="form-group">
+                        <label class="form-label">Upload Resume</label>
+                        <div id="dropzone" class="dropzone">
+                            <input type="file" id="resumeFile" accept=".pdf,.docx,.txt,.md" required>
+                            <div class="dropzone-content">
+                                <i class="fa-solid fa-cloud-arrow-up drop-icon"></i>
+                                <h3>Drag & Drop Resume</h3>
+                                <p>Supports PDF, DOCX, TXT, or MD (Max 10MB)</p>
+                                <span class="browse-btn">Browse File</span>
+                            </div>
+                            <div class="file-preview" id="filePreview" style="display: none;">
+                                <i class="fa-solid fa-file-pdf file-type-icon" id="previewIcon"></i>
+                                <div class="file-details">
+                                    <span class="file-name" id="previewName">resume.pdf</span>
+                                    <span class="file-size" id="previewSize">1.2 MB</span>
+                                </div>
+                                <button type="button" class="remove-file-btn" id="removeFileBtn" title="Remove file">
+                                    <i class="fa-solid fa-xmark"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Job Description Textarea -->
+                    <div class="form-group">
+                        <label for="jobDescription" class="form-label">Job Description</label>
+                        <div class="textarea-wrapper">
+                            <textarea id="jobDescription" placeholder="Paste the target Job Description, required skills, or job duties here..." required></textarea>
+                            <span class="char-counter" id="charCounter">0 characters</span>
+                        </div>
+                    </div>
+
+                    <!-- Scan Mode Banner -->
+                    <div class="mode-banner" id="modeBanner">
+                        <i class="fa-solid fa-bolt-lightning text-accent"></i>
+                        <div>
+                            <strong id="modeTitle">Quick NLP Mode</strong>
+                            <p id="modeDesc">Running local keyword matching. Paste a Gemini API Key above to unlock deep AI evaluation & interview prep.</p>
+                        </div>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <button type="submit" id="submitBtn" class="btn-primary">
+                        <span>Analyze Match</span>
+                        <i class="fa-solid fa-circle-notch fa-spin btn-spinner" id="btnSpinner" style="display: none;"></i>
+                        <i class="fa-solid fa-chevron-right btn-arrow" id="btnArrow"></i>
+                    </button>
+                </form>
+            </section>
+
+            <!-- Right Side: Results Dashboard -->
+            <section class="panel results-panel" id="resultsPanel">
+                
+                <!-- Initial Empty State -->
+                <div class="empty-state" id="emptyState">
+                    <div class="empty-glow"></div>
+                    <i class="fa-solid fa-chart-line-up empty-icon"></i>
+                    <h2>No Analysis Performed</h2>
+                    <p>Upload a resume and paste a job description, then click "Analyze Match" to generate your ATS score and profile analysis.</p>
+                </div>
+
+                <!-- Loading State -->
+                <div class="loading-state" id="loadingState" style="display: none;">
+                    <div class="pulse-loader"></div>
+                    <p>Parsing text and evaluating alignment...</p>
+                    <span class="loading-sub">Running natural language checks</span>
+                </div>
+
+                <!-- Results Output (hidden initially) -->
+                <div class="results-content" id="resultsContent" style="display: none;">
+                    
+                    <!-- Dashboard Header: Score + Candidate Info -->
+                    <div class="results-header-grid">
+                        <!-- Score Card -->
+                        <div class="score-card card-inner">
+                            <div class="score-circle-wrapper">
+                                <svg class="score-svg" viewBox="0 0 100 100">
+                                    <circle class="score-bg-circle" cx="50" cy="50" r="42"></circle>
+                                    <circle class="score-fill-circle" id="scoreCircle" cx="50" cy="50" r="42" stroke-dasharray="264" stroke-dashoffset="264"></circle>
+                                </svg>
+                                <div class="score-text">
+                                    <span class="score-number" id="scoreNumber">0</span>
+                                    <span class="score-pct">%</span>
+                                </div>
+                            </div>
+                            <div class="score-label">
+                                <h3 id="scoreStatus">Match Rating</h3>
+                                <p id="resultModeTag">Quick Local Scan</p>
+                            </div>
+                        </div>
+
+                        <!-- Candidate Quick Bio -->
+                        <div class="bio-card card-inner">
+                            <h3 class="section-title"><i class="fa-solid fa-user-tie"></i> Profile Details</h3>
+                            <div class="bio-info-grid">
+                                <div class="bio-item">
+                                    <span class="bio-label">Name</span>
+                                    <span class="bio-val" id="candName">-</span>
+                                </div>
+                                <div class="bio-item">
+                                    <span class="bio-label">Email</span>
+                                    <span class="bio-val" id="candEmail">-</span>
+                                </div>
+                                <div class="bio-item">
+                                    <span class="bio-label">Phone</span>
+                                    <span class="bio-val" id="candPhone">-</span>
+                                </div>
+                                <div class="bio-item">
+                                    <span class="bio-label">Profiles & Portfolio</span>
+                                    <div class="bio-val links-list" id="candLinks">
+                                        <!-- Will populate links dynamically -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Skills Matrix -->
+                    <div class="skills-grid">
+                        <div class="skills-card matched-card card-inner">
+                            <h4><i class="fa-solid fa-circle-check text-green"></i> Matched Skills <span class="badge badge-green" id="matchedCount">0</span></h4>
+                            <div class="tags-container" id="matchedSkillsTags">
+                                <!-- Matched tags -->
+                            </div>
+                        </div>
+                        <div class="skills-card missing-card card-inner">
+                            <h4><i class="fa-solid fa-circle-xmark text-red"></i> Missing Keywords <span class="badge badge-red" id="missingCount">0</span></h4>
+                            <div class="tags-container" id="missingSkillsTags">
+                                <!-- Missing tags -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Detailed Evaluation Analysis (Strengths, Weaknesses, Recommendations) -->
+                    <div class="evaluation-section card-inner">
+                        <h3 class="section-title"><i class="fa-solid fa-clipboard-list-check"></i> ATS Gap Analysis</h3>
+                        
+                        <div class="eval-category">
+                            <h5><i class="fa-solid fa-plus-circle text-green"></i> Key Strengths</h5>
+                            <ul class="bullet-list green-bullets" id="strengthsList">
+                                <!-- Strengths -->
+                            </ul>
+                        </div>
+                        
+                        <div class="eval-category">
+                            <h5><i class="fa-solid fa-minus-circle text-red"></i> Gaps & Areas for Improvement</h5>
+                            <ul class="bullet-list red-bullets" id="weaknessesList">
+                                <!-- Weaknesses -->
+                            </ul>
+                        </div>
+
+                        <div class="eval-category">
+                            <h5><i class="fa-solid fa-lightbulb text-yellow"></i> Actionable Recommendations</h5>
+                            <ul class="bullet-list blue-bullets" id="recommendationsList">
+                                <!-- Recommendations -->
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Interview Preparation Questions -->
+                    <div class="interview-section card-inner" id="interviewSection">
+                        <div class="interview-header">
+                            <h3 class="section-title"><i class="fa-solid fa-circle-question"></i> Tailored Interview Questions</h3>
+                            <span class="ai-generated-badge" id="questionsBadge">Local Practice</span>
+                        </div>
+                        <p class="section-subtitle">Use these customized prompts to prepare your pitch and explain alignment gaps.</p>
+                        
+                        <div class="questions-list" id="questionsList">
+                            <!-- Questions -->
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+        </main>
+        
+        <footer class="app-footer">
+            <p>&copy; 2026 Screener.AI. All rights reserved. Powered by Local NLP & Google Gemini.</p>
+        </footer>
+    </div>
+    <!-- Custom JS -->
+    <script src="/static/app.js"></script>
+</body>
+</html>
